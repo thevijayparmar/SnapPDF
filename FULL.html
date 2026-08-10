@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SnapPDF — Launch Film (60s)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   SNAPPDF — LAUNCH FILM, ~60 s, ONE continuous virtual-camera shot.
+   White/futuristic theme, rapid zooms, no slide-style cuts.
+   Record fullscreen (F11) at 1920×1080. Click the start overlay to
+   begin — this unlocks Web Audio (browsers block sound before a
+   user gesture) and is also the natural moment to start recording.
+   ================================================================ */
+:root{
+  --ink:#182233; --soft:#5B6B82; --bolt:#2F7CF6; --deep:#1E5FD0; --sky:#6BC8FF;
+  --violet:#8B5CF6; --amber:#F59E0B; --green:#1FA75C; --red:#E0475B;
+  --bg:#F4F7FC; --card:#FFFFFF; --line:#E4E9F2;
+  --mono:'JetBrains Mono',monospace; --sans:'Inter',system-ui,sans-serif; --disp:'Sora',var(--sans);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0A0E16;font-family:var(--sans)}
+#stage{position:fixed;inset:0;width:1920px;height:1080px;left:50%;top:50%;
+  transform:translate(-50%,-50%);overflow:hidden;background:var(--bg);
+  perspective:1800px}
+#bg{position:absolute;inset:-400px;z-index:0}
+.blob{position:absolute;border-radius:50%;filter:blur(110px);opacity:.5}
+.b1{width:900px;height:900px;background:#CFE0FF;top:-260px;left:-220px}
+.b2{width:760px;height:760px;background:#FFE3EE;top:640px;right:-200px}
+.b3{width:820px;height:820px;background:#DFF9EC;bottom:-320px;left:420px}
+#rig{position:absolute;inset:0;transform-style:preserve-3d}
+#world{position:absolute;left:0;top:0;width:2400px;height:1400px;
+  transform-style:preserve-3d;transform-origin:0 0;z-index:1}
+#vignette{position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,0) 58%,rgba(10,14,22,.28) 100%)}
+#grain{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+#prog{position:fixed;left:0;top:0;height:3px;width:0%;z-index:20;
+  background:linear-gradient(90deg,var(--bolt),var(--sky));box-shadow:0 0 12px rgba(47,124,246,.7)}
+
+#replay{position:fixed;right:22px;bottom:22px;z-index:30;font:600 13px var(--sans);
+  color:#fff;background:rgba(20,26,40,.55);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.18);padding:10px 16px;border-radius:100px;
+  cursor:pointer;opacity:0;transition:opacity .4s}
+#replay.show{opacity:1}
+
+#start{position:fixed;inset:0;z-index:100;background:#0A0E16;color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  cursor:pointer;transition:opacity .5s}
+#start.hide{opacity:0;pointer-events:none}
+#start .logo{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#3E8BFF,#1E5FD0);box-shadow:0 20px 50px -12px rgba(47,124,246,.6)}
+#start h1{font:800 30px var(--disp);letter-spacing:-.02em}
+#start p{font:500 15px var(--sans);color:#9BB0CC}
+#start .btn{margin-top:10px;font:700 14px var(--sans);padding:12px 26px;border-radius:100px;
+  background:linear-gradient(145deg,#3E8BFF,#1E5FD0);box-shadow:0 14px 30px -8px rgba(47,124,246,.6)}
+
+.card{position:absolute;border-radius:20px;background:rgba(255,255,255,.86);
+  backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 40px 90px -30px rgba(24,42,80,.35)}
+.win{position:absolute;border-radius:16px;background:#fff;border:1px solid var(--line);
+  box-shadow:0 50px 110px -30px rgba(24,42,80,.4);overflow:hidden}
+.winbar{height:38px;display:flex;align-items:center;gap:8px;padding:0 14px;
+  border-bottom:1px solid var(--line);background:#FAFBFE}
+.dot{width:11px;height:11px;border-radius:50%}
+.d1{background:#FF5F57}.d2{background:#FEBC2E}.d3{background:#28C840}
+.winbar .title{margin-left:8px;font:600 12.5px var(--sans);color:var(--soft)}
+
+.chip{position:absolute;font:700 13px var(--mono);padding:8px 14px;border-radius:10px;
+  background:#fff;border:1px solid var(--line);color:var(--soft);
+  box-shadow:0 14px 30px -12px rgba(24,42,80,.3)}
+.chip.blue{background:linear-gradient(145deg,#3E8BFF,#1E5FD0);color:#fff;border:none}
+.chip.red{color:var(--red);background:#FFE9EC;border-color:#FFD4DB}
+.chip.green{color:#fff;background:var(--green);border:none}
+
+.boltmark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#3E8BFF,#1E5FD0);box-shadow:0 10px 22px -8px rgba(47,124,246,.5)}
+
+.kbd{font:700 15px var(--mono);background:#fff;border:1px solid #DFE5EF;border-bottom-width:4px;
+  padding:10px 16px;border-radius:10px;position:absolute;color:var(--ink)}
+.kbd.hit{transform:translateY(4px);border-bottom-width:1px}
+
+.cursor{position:absolute;width:26px;height:26px;z-index:50;pointer-events:none;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.35))}
+.cursor svg{width:100%;height:100%}
+.cursor.click::after{content:"";position:absolute;left:-14px;top:-14px;width:54px;height:54px;
+  border-radius:50%;border:2.5px solid var(--bolt);animation:ripple .5s ease-out}
+@keyframes ripple{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.6)}}
+
+.toast{position:absolute;display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border:1px solid var(--line);
+  border-radius:16px;padding:14px 20px;box-shadow:0 30px 70px -20px rgba(24,42,80,.4)}
+.toast .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#4BC88A,#1FA75C);color:#fff;font:800 16px var(--disp)}
+.toast b{font:700 14px var(--disp);color:var(--ink)}
+.toast span{display:block;font:500 12px var(--sans);color:var(--soft)}
+
+.filerow{position:absolute;display:flex;align-items:center;gap:10px;font:600 13px var(--mono);
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 16px;
+  box-shadow:0 14px 30px -12px rgba(24,42,80,.25)}
+.sq{width:20px;height:20px;border-radius:6px;flex:none}
+.g1{background:linear-gradient(135deg,#FFB36B,#FF6BA8)}
+.g2{background:linear-gradient(135deg,#6BC8FF,#6B7BFF)}
+.g3{background:linear-gradient(135deg,#7BE8A8,#4BC8D8)}
+.g4{background:linear-gradient(135deg,#C89BFF,#FF9BD2)}
+
+#s-hook{position:absolute;left:60px;top:80px;width:640px}
+#s-hook .doc{width:280px;height:360px;border-radius:16px;background:#fff;border:1px solid var(--line);
+  box-shadow:0 40px 90px -24px rgba(224,71,91,.35);padding:26px;position:relative}
+#s-hook .doc i{display:block;height:9px;border-radius:5px;background:#EEF2F9;margin-bottom:14px}
+#s-hook .doc i:nth-child(1){width:70%}#s-hook .doc i:nth-child(2){width:92%}
+#s-hook .doc i:nth-child(3){width:58%}#s-hook .doc i:nth-child(4){width:84%}
+#s-hook .imgblock{position:absolute;left:26px;right:26px;bottom:26px;height:120px;border-radius:10px;
+  background:linear-gradient(135deg,#FFB36B,#FF6BA8)}
+#s-hook .weight{position:absolute;right:-30px;top:26px}
+
+#s-menu{position:absolute;left:820px;top:60px;width:520px}
+#s-menu .explorer{width:460px;border-radius:14px;background:#fff;border:1px solid var(--line);
+  box-shadow:0 40px 90px -26px rgba(24,42,80,.3)}
+#s-menu .row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F0F3F9;
+  font:600 13px var(--mono);color:var(--ink)}
+#s-menu .menu{position:absolute;left:420px;top:60px;width:230px;border-radius:14px;background:#fff;
+  border:1px solid var(--line);box-shadow:0 30px 70px -18px rgba(24,42,80,.35);padding:8px;
+  opacity:0;transform:scale(.9);transform-origin:top left}
+#s-menu .menu div{font:600 13px var(--sans);color:var(--soft);padding:10px 12px;border-radius:9px}
+#s-menu .menu .hl{background:rgba(47,124,246,.1);color:var(--deep);font-weight:700;
+  display:flex;align-items:center;gap:8px}
+#s-menu .flyout{position:absolute;left:640px;top:80px;width:150px;border-radius:12px;background:#fff;
+  border:1px solid var(--line);box-shadow:0 30px 70px -18px rgba(24,42,80,.35);padding:6px;
+  opacity:0;transform:scale(.9);transform-origin:top left}
+#s-menu .flyout div{font:600 12.5px var(--mono);color:var(--soft);padding:8px 10px;border-radius:8px}
+#s-menu .flyout div.pick{background:linear-gradient(145deg,#3E8BFF,#1E5FD0);color:#fff}
+
+#s-hot{position:absolute;left:1500px;top:120px;width:480px}
+#s-hot .kbd{position:static;display:inline-flex;margin-right:14px}
+
+#s-size{position:absolute;left:1500px;top:520px;width:560px}
+#s-size .bar{width:420px;height:22px;border-radius:100px;background:#EAEFF7;overflow:hidden;
+  position:relative}
+#s-size .fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#3E8BFF,#1E5FD0);width:0%}
+
+#s-merge{position:absolute;left:60px;top:640px;width:640px}
+#s-merge .stack{position:relative;height:200px}
+#s-merge .pf{position:absolute;width:150px;height:190px;border-radius:12px;background:#fff;
+  border:1px solid var(--line);box-shadow:0 20px 50px -18px rgba(24,42,80,.3)}
+#s-merge .pf i{display:block;height:6px;border-radius:4px;background:#EEF2F9;margin:14px 14px 0}
+
+#s-img{position:absolute;left:820px;top:640px;width:640px}
+#s-img .frame{width:520px;height:200px;border-radius:14px;background:#fff;border:1px solid var(--line);
+  box-shadow:0 30px 70px -22px rgba(24,42,80,.3);display:flex;align-items:center;
+  justify-content:center;gap:18px;padding:0 24px}
+#s-img .thumb{width:88px;height:120px;border-radius:8px;background:linear-gradient(135deg,#6BC8FF,#6B7BFF);
+  opacity:0;transform:scale(.7)}
+
+#s-text{position:absolute;left:1620px;top:660px;width:560px}
+#s-text .page{width:300px;height:380px;border-radius:14px;background:#fff;border:1px solid var(--line);
+  box-shadow:0 30px 70px -22px rgba(24,42,80,.3);padding:30px;position:relative;overflow:hidden}
+#s-text .ph{position:absolute;left:30px;top:30px;width:100px;height:100px;border-radius:10px;
+  background:linear-gradient(135deg,#FFB36B,#FF6BA8)}
+#s-text .ln{display:block;height:8px;border-radius:5px;background:#EEF2F9;margin-bottom:12px}
+
+#s-app{position:absolute;left:60px;top:1040px;width:1200px}
+#s-app .win{width:1080px}
+#s-app .app-body{display:flex;gap:22px;padding:24px}
+#s-app .rowbar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;
+  background:#EFF4FF;margin-bottom:10px}
+#s-app .bar{flex:1;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+#s-app .bar i{display:block;height:100%;border-radius:6px}
+
+#s-trust{position:absolute;left:1400px;top:1040px;width:760px}
+#s-trust .row{display:flex;align-items:center;gap:16px;margin-bottom:20px;
+  opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s cubic-bezier(.16,1,.3,1)}
+#s-trust .row.show{opacity:1;transform:none}
+#s-trust .ic{width:44px;height:44px;border-radius:12px;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;box-shadow:0 14px 30px -12px rgba(24,42,80,.25);font-size:20px}
+#s-trust b{font:700 17px var(--disp);color:var(--ink);display:block}
+#s-trust span{font:500 13px var(--sans);color:var(--soft)}
+
+#s-cta{position:absolute;left:600px;top:1600px;width:1200px;text-align:center}
+#s-cta .logo{width:110px;height:110px;border-radius:28px;margin:0 auto 26px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#3E8BFF,#1E5FD0);box-shadow:0 40px 90px -18px rgba(47,124,246,.55);
+  opacity:0;transform:scale(.5);transition:opacity .5s,transform .6s cubic-bezier(.16,1,.3,1)}
+#s-cta h1{font:800 68px var(--disp);letter-spacing:-.02em;color:var(--ink);
+  opacity:0;transform:translateY(14px);transition:opacity .5s,transform .5s cubic-bezier(.16,1,.3,1)}
+#s-cta p.tag{font:500 24px var(--sans);color:var(--soft);margin-top:14px;
+  opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s cubic-bezier(.16,1,.3,1)}
+#s-cta .badges{display:flex;gap:14px;justify-content:center;margin-top:36px}
+#s-cta .badge{font:700 14px var(--sans);padding:12px 22px;border-radius:100px;
+  background:#EAF1FF;color:var(--deep);opacity:0;transform:translateY(10px) scale(.9);
+  transition:opacity .4s,transform .4s cubic-bezier(.16,1,.3,1)}
+#s-cta .credit{margin-top:40px;font:600 16px var(--sans);color:var(--soft);
+  opacity:0;transition:opacity .6s}
+#s-cta .credit b{color:var(--ink)}
+#s-cta.show .logo{opacity:1;transform:scale(1)}
+#s-cta .logo.show{opacity:1;transform:scale(1)}
+#s-cta h1.show{opacity:1;transform:none}
+#s-cta p.tag.show{opacity:1;transform:none}
+#s-cta .badge.show{opacity:1;transform:none}
+#s-cta .credit.show{opacity:1}
+
+.flare{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,.9),rgba(255,255,255,0) 70%);
+  opacity:0;transform:scale(.4)}
+</style>
+</head>
+<body>
+
+<div id="start">
+  <div class="logo"><svg viewBox="0 0 24 24" width="34" height="34"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2Z" fill="#FFB92E"/></svg></div>
+  <h1>SnapPDF</h1>
+  <p>Click to play — unlocks sound &amp; starts the film</p>
+  <div class="btn">▶ Play Launch Film</div>
+</div>
+
+<div id="prog"></div>
+<div id="replay">↻ Replay</div>
+
+<div id="stage">
+  <div id="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+  <div id="rig">
+    <div id="world">
+
+      <div id="s-hook">
+        <div class="doc">
+          <i></i><i></i><i></i><i></i>
+          <div class="imgblock"></div>
+        </div>
+        <div class="chip red weight">12.4 MB</div>
+      </div>
+
+      <div id="s-menu">
+        <div class="explorer">
+          <div class="row"><span class="sq g1"></span>Q-202606_Report.pdf</div>
+          <div class="row" style="opacity:.5"><span class="sq g2"></span>Invoice_final.pdf</div>
+          <div class="row" style="opacity:.5"><span class="sq g3"></span>Scan_0091.pdf</div>
+        </div>
+        <div class="menu" id="ctxmenu">
+          <div>Open</div>
+          <div>Print</div>
+          <div class="hl"><span class="boltmark" style="width:18px;height:18px;border-radius:5px"></span>SnapPDF ›</div>
+          <div>Properties</div>
+        </div>
+        <div class="flyout" id="flyout1">
+          <div>Quick Optimize</div>
+          <div class="pick">Shrink to size ›</div>
+          <div>Merge PDFs</div>
+        </div>
+      </div>
+
+      <div id="s-hot">
+        <div style="margin-bottom:20px">
+          <span class="kbd" id="k1">Ctrl</span><span class="kbd" id="k2">Alt</span><span class="kbd" id="k3">P</span>
+        </div>
+        <div class="toast" id="toast-hot" style="opacity:0;left:0;top:90px">
+          <div class="ic">✓</div>
+          <div><b>Report_optimized.pdf</b><span>12.4 MB → 1.1 MB · 91% smaller</span></div>
+        </div>
+      </div>
+
+      <div id="s-size">
+        <div class="chip blue" style="position:static;display:inline-block;margin-bottom:18px">Shrink to size → 250 KB</div>
+        <div class="bar"><div class="fill" id="sizefill"></div></div>
+        <div class="toast" id="toast-size" style="opacity:0;left:0;top:60px">
+          <div class="ic">✓</div>
+          <div><b>report_248KB.pdf</b><span>target reached exactly</span></div>
+        </div>
+      </div>
+
+      <div id="s-merge">
+        <div class="stack">
+          <div class="pf" id="pf1" style="left:0;top:10px;transform:rotate(-6deg)"><i></i><i></i><i></i></div>
+          <div class="pf" id="pf2" style="left:60px;top:0;transform:rotate(2deg)"><i></i><i></i><i></i></div>
+          <div class="pf" id="pf3" style="left:120px;top:14px;transform:rotate(8deg)"><i></i><i></i><i></i></div>
+        </div>
+        <div class="toast" id="toast-merge" style="opacity:0;left:20px;top:210px">
+          <div class="ic">✓</div>
+          <div><b>report_merged.pdf</b><span>3 files → 1, 18 pages</span></div>
+        </div>
+      </div>
+
+      <div id="s-img">
+        <div class="frame">
+          <div class="thumb" id="th1"></div>
+          <div class="thumb" id="th2" style="background:linear-gradient(135deg,#7BE8A8,#4BC8D8)"></div>
+          <div class="thumb" id="th3" style="background:linear-gradient(135deg,#C89BFF,#FF9BD2)"></div>
+        </div>
+        <div class="chip green" id="imgchip" style="position:static;display:inline-block;margin-top:18px;opacity:0">Combined → invoice.pdf ✓</div>
+      </div>
+
+      <div id="s-text">
+        <div class="page" id="textpage">
+          <div class="ph" id="textph"></div>
+          <span class="ln" style="width:70%;margin-top:130px"></span>
+          <span class="ln" style="width:90%"></span>
+          <span class="ln" style="width:55%"></span>
+          <span class="ln" style="width:80%"></span>
+        </div>
+        <div class="chip blue" id="textchip" style="position:static;display:inline-block;margin-top:18px;opacity:0">Keep only Text ✓ 4 KB</div>
+      </div>
+
+      <div id="s-app">
+        <div class="win">
+          <div class="winbar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+            <span class="title">⚡ SnapPDF</span></div>
+          <div class="app-body">
+            <div style="flex:1">
+              <div class="rowbar"><span style="font:700 12px var(--mono);color:var(--soft);width:70px">Images</span><span class="bar"><i style="width:82%;background:linear-gradient(90deg,#3E8BFF,#1E5FD0)"></i></span></div>
+              <div class="rowbar"><span style="font:700 12px var(--mono);color:var(--soft);width:70px">Fonts</span><span class="bar"><i style="width:9%;background:linear-gradient(90deg,#8B5CF6,#6D3FE0)"></i></span></div>
+              <div class="rowbar"><span style="font:700 12px var(--mono);color:var(--soft);width:70px">Meta</span><span class="bar"><i style="width:5%;background:linear-gradient(90deg,#F59E0B,#D97F06)"></i></span></div>
+            </div>
+            <div style="width:260px;background:#F4F7FC;border-radius:12px;padding:16px">
+              <div style="font:700 12px var(--disp);color:var(--ink);margin-bottom:8px">Apx. output: 1.1 MB</div>
+              <div style="font:500 11px var(--sans);color:var(--soft)">Target 1 MB is achievable</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="s-trust">
+        <div class="row" id="trust1"><div class="ic">🔒</div><div><b>Originals never touched</b><span>every action creates a new file</span></div></div>
+        <div class="row" id="trust2"><div class="ic">📡</div><div><b>100% offline</b><span>no uploads, no accounts, no telemetry</span></div></div>
+        <div class="row" id="trust3"><div class="ic">🪟</div><div><b>No admin install</b><span>right-click ready in under a minute</span></div></div>
+      </div>
+
+      <div id="s-cta">
+        <div class="logo" id="cta-logo"><svg viewBox="0 0 24 24" width="46" height="46"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2Z" fill="#FFB92E"/></svg></div>
+        <h1 id="cta-title">SnapPDF</h1>
+        <p class="tag" id="cta-tag">Shrink, merge &amp; convert PDFs from a right-click.</p>
+        <div class="badges">
+          <div class="badge" id="cta-b1">Open Source</div>
+          <div class="badge" id="cta-b2">Free Forever</div>
+          <div class="badge" id="cta-b3">100% Offline</div>
+        </div>
+        <div class="credit" id="cta-credit">Developed by <b>Vijay Parmar</b></div>
+      </div>
+
+      <div class="cursor" id="cursor" style="left:0;top:0;transform:translate(1400px,300px)">
+        <svg viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 16 L12 22 L15 20.5 L12 14.5 L18 14.5 Z" fill="#182233" stroke="#fff" stroke-width="1.4"/></svg>
+      </div>
+      <div class="flare" id="flare"></div>
+
+    </div>
+  </div>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+</div>
+
+<script>
+const SFX = (() => {
+  let ctx=null;
+  function ac(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); return ctx; }
+  function env(g,t0,a,d,peak=1){ g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(peak,t0+a); g.gain.exponentialRampToValueAtTime(0.0001,t0+a+d); }
+  function whoosh(vol=.35, dur=.5){
+    const c=ac(), t0=c.currentTime, buf=c.createBuffer(1, c.sampleRate*dur, c.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+    const src=c.createBufferSource(); src.buffer=buf;
+    const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.setValueAtTime(700,t0); bp.frequency.exponentialRampToValueAtTime(2400,t0+dur*.8); bp.Q.value=.9;
+    const g=c.createGain(); env(g,t0,dur*.15,dur*.85,vol);
+    src.connect(bp); bp.connect(g); g.connect(c.destination); src.start(t0); src.stop(t0+dur+.05);
+  }
+  function click(){
+    const c=ac(), t0=c.currentTime, o=c.createOscillator(), g=c.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(1100,t0); o.frequency.exponentialRampToValueAtTime(400,t0+.06);
+    env(g,t0,.004,.09,.5); o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+.12);
+  }
+  function key(){
+    const c=ac(), t0=c.currentTime;
+    const o1=c.createOscillator(), o2=c.createOscillator(), g=c.createGain();
+    o1.type='square'; o1.frequency.value=140; o2.type='sine'; o2.frequency.value=90;
+    env(g,t0,.003,.08,.4); o1.connect(g); o2.connect(g); g.connect(c.destination);
+    o1.start(t0); o2.start(t0); o1.stop(t0+.1); o2.stop(t0+.1);
+  }
+  function pop(vol=.3){
+    const c=ac(), t0=c.currentTime, o=c.createOscillator(), g=c.createGain();
+    o.type='triangle'; o.frequency.setValueAtTime(600,t0); o.frequency.exponentialRampToValueAtTime(1400,t0+.07);
+    env(g,t0,.005,.1,vol); o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+.14);
+  }
+  function chime(){
+    const c=ac(), t0=c.currentTime;
+    [660,990].forEach((f,i)=>{
+      const o=c.createOscillator(), g=c.createGain();
+      o.type='sine'; o.frequency.value=f;
+      env(g,t0+i*.09,.008,.4,.35); o.connect(g); g.connect(c.destination);
+      o.start(t0+i*.09); o.stop(t0+i*.09+.5);
+    });
+  }
+  return {whoosh, click, pop, key, chime};
+})();
+
+const world=document.getElementById('world'), rig=document.getElementById('rig'), bg=document.getElementById('bg');
+let cam={x:400,y:260,s:1,rx:2,ry:-4,rz:0}, tw=null, kick=0, blur=0;
+const easeExpo=p=>p===1?1:1-Math.pow(2,-10*p);
+function camTo(t,dur=900){ tw={from:{...cam},to:{...cam,...t},t0:performance.now(),dur}; }
+function doKick(a=1){ kick=Math.min(2.2,kick+a); }
+
+function frame(now){
+  if(tw){
+    const p=Math.min((now-tw.t0)/tw.dur,1), e=easeExpo(p);
+    for(const k in cam) cam[k]=tw.from[k]+(tw.to[k]-tw.from[k])*e;
+    const spd=Math.hypot(tw.to.x-tw.from.x,tw.to.y-tw.from.y)+Math.abs(tw.to.s-tw.from.s)*900;
+    blur = p<1 ? Math.min(9, spd/240*Math.sin(p*Math.PI)) : 0;
+    if(p===1) tw=null;
+  } else { blur*=.75; }
+  kick*=.88;
+  const hx=Math.sin(now*7e-4)*3+Math.sin(now*13e-4)*1.6,
+        hy=Math.cos(now*9e-4)*2.4+Math.sin(now*11e-4)*1.4,
+        hr=Math.sin(now*5e-4)*.28+kick*.5, ks=1+kick*.014;
+  world.style.transform = `translate(${960-cam.x*cam.s+hx}px,${540-cam.y*cam.s+hy}px) scale(${cam.s*ks})`;
+  rig.style.transform = `rotateX(${cam.rx}deg) rotateY(${cam.ry}deg) rotateZ(${cam.rz+hr}deg)`;
+  world.style.filter = blur>.3 ? `blur(${blur.toFixed(1)}px)` : 'none';
+  bg.style.transform = `translate(${(400-cam.x)*.11}px,${(260-cam.y)*.11}px)`;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+const $=id=>document.getElementById(id);
+function mv(x,y,ms=800){
+  const c=$('cursor');
+  c.style.transition=`transform ${ms}ms cubic-bezier(.3,.05,.2,1.06)`;
+  c.style.transform=`translate(${x}px,${y}px)`;
+}
+function clk(){
+  const c=$('cursor'); c.classList.remove('click'); void c.offsetWidth; c.classList.add('click');
+  SFX.click(); doKick(.7);
+}
+function flareAt(x,y){
+  const f=$('flare'); f.style.left=(x-60)+'px'; f.style.top=(y-60)+'px'; f.style.width=f.style.height='120px';
+  f.style.transition='none'; f.style.opacity='0'; f.style.transform='scale(.3)'; void f.offsetWidth;
+  f.style.transition='opacity .5s ease-out, transform .6s cubic-bezier(.16,1,.3,1)';
+  f.style.opacity='.9'; f.style.transform='scale(1.6)';
+  setTimeout(()=>{ f.style.opacity='0'; }, 260);
+}
+
+const T=[]; const add=(at,fn)=>T.push({at,fn});
+const TOTAL_MS = 60000;
+
+add(0, ()=>{
+  cam={x:280,y:220,s:1.35,rx:5,ry:-9,rz:0};
+  camTo({x:300,y:220,s:1.55,ry:-6},1300); SFX.whoosh(.4,.7);
+});
+add(2200, ()=>camTo({x:340,y:220,s:1.9,ry:-2},900));
+
+add(3900, ()=>{ doKick(1); SFX.pop(); });
+add(4600, ()=>camTo({x:900,y:340,s:.62,rx:2,ry:-2},1300));
+add(6200, ()=>camTo({x:900,y:340,s:.7},900));
+
+add(7300, ()=>{
+  camTo({x:1000,y:180,s:1.35,rx:1,ry:-1},1200); SFX.whoosh(.4,.6);
+  mv(1180,180,700);
+});
+add(8600, ()=>clk());
+add(8750, ()=>{
+  $('ctxmenu').style.transition='opacity .3s, transform .35s cubic-bezier(.16,1,.3,1)';
+  $('ctxmenu').style.opacity='1'; $('ctxmenu').style.transform='scale(1)';
+  camTo({x:1060,y:200,s:1.7},700); doKick(1.1); SFX.whoosh(.35,.4);
+});
+add(9600, ()=>mv(1260,220,500));
+add(10100, ()=>{
+  $('flyout1').style.transition='opacity .3s, transform .3s cubic-bezier(.16,1,.3,1)';
+  $('flyout1').style.opacity='1'; $('flyout1').style.transform='scale(1)';
+  camTo({x:1120,y:230,s:1.9},600); SFX.pop();
+});
+
+add(11400, ()=>{
+  $('ctxmenu').style.opacity='0'; $('flyout1').style.opacity='0';
+  camTo({x:1740,y:210,s:1.5,rx:0,ry:2},1300); SFX.whoosh(.4,.7);
+});
+add(12900, ()=>{ $('k1').classList.add('hit'); SFX.key(); doKick(.5); });
+add(13300, ()=>{ $('k2').classList.add('hit'); SFX.key(); doKick(.5); });
+add(13700, ()=>{
+  $('k3').classList.add('hit'); SFX.key();
+  camTo({x:1740,y:280,s:2.1,rz:.6},520); doKick(1.6); flareAt(1740,300); SFX.chime();
+});
+add(14500, ()=>{
+  $('toast-hot').style.transition='opacity .4s, transform .4s cubic-bezier(.16,1,.3,1)';
+  $('toast-hot').style.opacity='1';
+});
+add(16500, ()=>camTo({x:1740,y:230,s:1.5,rz:0},1000));
+
+add(18000, ()=>{
+  $('k1').classList.remove('hit'); $('k2').classList.remove('hit'); $('k3').classList.remove('hit');
+  camTo({x:1780,y:620,s:1.25,rx:2,ry:-1},1300); SFX.whoosh(.4,.65);
+});
+add(19700, ()=>{
+  const fill=$('sizefill');
+  fill.style.transition='width 1.6s cubic-bezier(.16,1,.3,1)'; fill.style.width='100%';
+  SFX.pop();
+});
+add(21500, ()=>{
+  camTo({x:1780,y:660,s:1.7},700); doKick(1); flareAt(1780,660); SFX.chime();
+  $('toast-size').style.transition='opacity .4s, transform .4s cubic-bezier(.16,1,.3,1)';
+  $('toast-size').style.opacity='1';
+});
+
+add(24000, ()=>{ camTo({x:380,y:770,s:1.15,rx:3,ry:-4,rz:0},1300); SFX.whoosh(.4,.65); });
+add(25700, ()=>{
+  ['pf1','pf2','pf3'].forEach((id,i)=>{
+    setTimeout(()=>{
+      $(id).style.transition='transform .5s cubic-bezier(.16,1,.3,1)';
+      $(id).style.transform=`translate(${70-i*70}px,${i*4}px) rotate(0deg)`;
+      SFX.pop();
+    }, i*160);
+  });
+});
+add(26900, ()=>{
+  camTo({x:380,y:830,s:1.55},700); doKick(1.1); flareAt(380,830); SFX.chime();
+  $('toast-merge').style.transition='opacity .4s, transform .4s cubic-bezier(.16,1,.3,1)';
+  $('toast-merge').style.opacity='1';
+});
+
+add(29500, ()=>{ camTo({x:1120,y:750,s:1.2,rx:2,ry:2},1300); SFX.whoosh(.4,.65); });
+add(31200, ()=>{
+  ['th1','th2','th3'].forEach((id,i)=>{
+    setTimeout(()=>{
+      $(id).style.transition='opacity .4s, transform .4s cubic-bezier(.16,1,.3,1)';
+      $(id).style.opacity='1'; $(id).style.transform='scale(1)';
+      SFX.pop();
+    }, i*140);
+  });
+});
+add(32300, ()=>{
+  camTo({x:1120,y:780,s:1.5},700); doKick(.9); flareAt(1120,830); SFX.chime();
+  $('imgchip').style.transition='opacity .4s'; $('imgchip').style.opacity='1';
+});
+
+add(34700, ()=>{ camTo({x:1920,y:850,s:1.15,rx:2,ry:-3},1300); SFX.whoosh(.4,.65); });
+add(36400, ()=>{
+  $('textph').style.transition='opacity .5s, transform .5s cubic-bezier(.16,1,.3,1)';
+  $('textph').style.opacity='0'; $('textph').style.transform='scale(.6)';
+  SFX.pop();
+});
+add(37200, ()=>{
+  camTo({x:1920,y:850,s:1.5},700); doKick(1); flareAt(1920,850); SFX.chime();
+  $('textchip').style.transition='opacity .4s'; $('textchip').style.opacity='1';
+});
+
+add(39700, ()=>{ camTo({x:660,y:1150,s:.92,rx:1,ry:0},1300); SFX.whoosh(.4,.6); });
+add(41500, ()=>camTo({x:660,y:1150,s:1.05},900));
+
+add(44500, ()=>{ camTo({x:1780,y:1150,s:1,rx:1,ry:1},1300); SFX.whoosh(.4,.6); });
+add(46200, ()=>{ $('trust1').classList.add('show'); SFX.pop(); });
+add(46900, ()=>{ $('trust2').classList.add('show'); SFX.pop(); });
+add(47600, ()=>{ $('trust3').classList.add('show'); SFX.pop(); doKick(.5); });
+
+add(49500, ()=>{ camTo({x:1200,y:1700,s:.62,rx:0,ry:0,rz:0},1500); SFX.whoosh(.45,.8); });
+add(51500, ()=>{
+  camTo({x:1200,y:1700,s:.72},1000); doKick(1); flareAt(1200,1620); SFX.chime();
+  $('cta-logo').classList.add('show');
+});
+add(52600, ()=>{ $('cta-title').classList.add('show'); SFX.pop(.25); });
+add(53400, ()=>{ $('cta-tag').classList.add('show'); });
+add(54300, ()=>{ $('cta-b1').classList.add('show'); SFX.pop(.2); });
+add(54700, ()=>{ $('cta-b2').classList.add('show'); SFX.pop(.2); });
+add(55100, ()=>{ $('cta-b3').classList.add('show'); SFX.pop(.2); doKick(.4); });
+add(56200, ()=>{ $('cta-credit').classList.add('show'); camTo({x:1200,y:1700,s:.76},1600); SFX.whoosh(.25,.6); });
+
+add(58500, ()=>{});
+
+let started=false;
+function startFilm(){
+  if(started) return; started=true;
+  $('start').classList.add('hide');
+  const t0=performance.now();
+  T.forEach(ev=>setTimeout(ev.fn, ev.at));
+  const progEl=$('prog');
+  function tickProg(){
+    const el=performance.now()-t0, pct=Math.min(100, el/TOTAL_MS*100);
+    progEl.style.width=pct+'%';
+    if(el<TOTAL_MS+400) requestAnimationFrame(tickProg);
+    else $('replay').classList.add('show');
+  }
+  requestAnimationFrame(tickProg);
+}
+$('start').addEventListener('click', startFilm);
+$('replay').addEventListener('click', ()=>location.reload());
+</script>
+</body>
+</html>

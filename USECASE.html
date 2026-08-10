@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>SnapPDF — 16 Everyday Uses (loop grid)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   SnapPDF — 16 micro use-case loops, 4×4 grid, PORTRAIT.
+   Width fixed at 1080px, height unrestricted. Pure CSS loops
+   (3.6–5 s each, staggered) — safe to embed on a webpage or record
+   in portrait. No camera moves, no zoom, no sound.
+   ================================================================ */
+:root{
+  --ink:#182233;--soft:#5B6B82;--bolt:#2F7CF6;--deep:#1E5FD0;--amber:#F59E0B;
+  --green:#1FA75C;--red:#E0475B;--violet:#8B5CF6;--stroke:rgba(255,255,255,.9);
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;
+  --disp:'Sora',var(--sans);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1080px;margin:0 auto;font-family:var(--sans);color:var(--ink);
+  background:#F3F6FB;position:relative;overflow-x:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;z-index:0}
+.b1{width:600px;height:600px;background:#CFE0FF;top:-160px;left:-140px}
+.b2{width:520px;height:520px;background:#FFE3EE;top:900px;right:-160px}
+.b3{width:520px;height:520px;background:#DFF9EC;top:1700px;left:-160px}
+
+header{position:relative;z-index:1;display:flex;align-items:center;gap:14px;
+  padding:34px 40px 22px}
+.hlogo{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#3E8BFF,#1E5FD0);
+  box-shadow:0 14px 28px -8px rgba(47,124,246,.5)}
+header h1{font:800 30px var(--disp);letter-spacing:-.02em}
+header p{font:500 15px var(--sans);color:var(--soft);margin-left:auto}
+
+.grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);
+  gap:18px;padding:10px 40px 46px}
+
+.tile{border-radius:18px;background:rgba(255,255,255,.72);backdrop-filter:blur(16px);
+  border:1px solid var(--stroke);box-shadow:0 18px 40px -18px rgba(24,42,80,.22);
+  overflow:hidden;display:flex;flex-direction:column}
+.anim{height:150px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,rgba(47,124,246,.05),rgba(255,255,255,0))}
+.meta{padding:12px 14px 15px}
+.meta h3{font:700 14.5px var(--disp);margin-bottom:3px}
+.meta p{font:400 11.5px/1.45 var(--sans);color:var(--soft)}
+
+/* ---------- shared mini components ---------- */
+.chip{font:700 11px var(--mono);padding:5px 10px;border-radius:8px;position:absolute;
+  background:#fff;border:1px solid #E4E9F2;color:var(--soft);box-shadow:0 6px 14px -6px rgba(24,42,80,.25)}
+.chip.blue{background:linear-gradient(145deg,#3E8BFF,#1E5FD0);color:#fff;border:none}
+.chip.red{color:var(--red);background:#FFE9EC;border-color:#FFD4DB}
+.chip.grn{color:#fff;background:var(--green);border:none}
+.kbd{font:700 11px var(--mono);background:#fff;border:1px solid #DFE5EF;border-bottom-width:3px;
+  padding:6px 9px;border-radius:7px;position:absolute}
+.doc{position:absolute;border-radius:8px;background:#fff;border:1px solid #E4E9F2;
+  box-shadow:0 8px 18px -8px rgba(24,42,80,.25)}
+.doc i{display:block;height:5px;border-radius:3px;background:#EAEFF7;margin-bottom:6px}
+.boltIc{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#3E8BFF,#1E5FD0);position:absolute}
+.fileRow{position:absolute;display:flex;align-items:center;gap:7px;font:600 10.5px var(--mono);
+  background:#fff;border:1px solid #E4E9F2;border-radius:9px;padding:7px 10px;
+  box-shadow:0 6px 14px -6px rgba(24,42,80,.2)}
+.sq{width:16px;height:16px;border-radius:4px;flex:none}
+.g1{background:linear-gradient(135deg,#FFB36B,#FF6BA8)}
+.g2{background:linear-gradient(135deg,#6BC8FF,#6B7BFF)}
+.g3{background:linear-gradient(135deg,#7BE8A8,#4BC8D8)}
+.g4{background:linear-gradient(135deg,#C89BFF,#FF9BD2)}
+
+/* generic before/after chip pair pattern, reused across many tiles */
+@keyframes fadeA{0%,38%{opacity:1}46%,90%{opacity:0}98%,100%{opacity:1}}
+@keyframes fadeB{0%,40%{opacity:0;transform:scale(.7)}48%,88%{opacity:1;transform:scale(1)}96%,100%{opacity:0}}
+@keyframes popIn{0%,48%{opacity:0;transform:scale(.5)}56%,90%{opacity:1;transform:scale(1)}98%,100%{opacity:0}}
+
+/* ============ T1 Quick Optimize hotkey ============ */
+#t1 .kbd{top:26px}
+#t1 .k1{left:14px;animation:t1k 4s infinite}
+#t1 .k2{left:62px;animation:t1k 4s .15s infinite}
+#t1 .k3{left:109px;animation:t1k 4s .3s infinite}
+@keyframes t1k{6%,10%{transform:translateY(3px);border-bottom-width:1px}0%,4%,12%,100%{transform:none}}
+#t1 .chip{top:88px;left:50%;transform:translateX(-50%)}
+#t1 .c-big{animation:fadeA 4s infinite}
+#t1 .c-sml{animation:fadeB 4s infinite;opacity:0}
+
+/* ============ T2 Shrink to exact size ============ */
+#t2 .bar{position:absolute;left:24px;top:60px;width:170px;height:18px;border-radius:100px;
+  background:#EAEFF7;overflow:hidden}
+#t2 .fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#3E8BFF,#1E5FD0);
+  width:0;animation:t2f 4.2s infinite}
+@keyframes t2f{0%,15%{width:0}55%,88%{width:100%}96%,100%{width:0}}
+#t2 .chip{right:16px;top:92px;opacity:0;animation:popIn 4.2s infinite}
+
+/* ============ T3 Shrink to % of size ============ */
+#t3 .doc{left:34px;top:20px;width:78px;height:104px;padding:10px 9px}
+#t3 .doc i:nth-child(1){width:70%}#t3 .doc i:nth-child(2){width:90%}
+#t3 .doc i:nth-child(3){width:55%}#t3 .doc i:nth-child(4){width:80%}
+#t3 .pct{position:absolute;left:126px;top:38px;font:800 26px var(--disp);color:var(--bolt);
+  opacity:0;animation:t3p 4.4s infinite}
+@keyframes t3p{0%,20%{opacity:0;transform:scale(.6)}30%,85%{opacity:1;transform:scale(1)}95%,100%{opacity:0}}
+#t3 .chip{left:118px;top:92px;animation:popIn 4.4s infinite}
+
+/* ============ T4 Email attachment limit ============ */
+#t4 .env{position:absolute;left:26px;top:34px;width:96px;height:64px;border-radius:9px;
+  background:#fff;border:1px solid #E4E9F2}
+#t4 .env::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(to bottom right,transparent 46%,#E4E9F2 47%,transparent 53%),
+             linear-gradient(to bottom left,transparent 46%,#E4E9F2 47%,transparent 53%);
+  background-size:50% 60%;background-repeat:no-repeat;background-position:top left,top right}
+#t4 .chip{left:44px;top:76px}
+#t4 .c-big{animation:fadeA 4.6s infinite}
+#t4 .c-sml{opacity:0;animation:fadeB 4.6s infinite}
+#t4 .plane{position:absolute;left:150px;top:56px;font-size:22px;opacity:0;animation:t4p 4.6s infinite}
+@keyframes t4p{0%,52%{opacity:0;transform:translate(0,0) rotate(0)}
+  58%{opacity:1}80%{opacity:1;transform:translate(60px,-28px) rotate(12deg)}
+  88%,100%{opacity:0;transform:translate(80px,-40px) rotate(14deg)}}
+
+/* ============ T5 Government portal upload limit ============ */
+#t5 .doc{left:30px;top:22px;width:78px;height:104px;padding:10px 9px}
+#t5 .doc i:nth-child(1){width:70%}#t5 .doc i:nth-child(2){width:90%}
+#t5 .doc i:nth-child(3){width:55%}#t5 .doc i:nth-child(4){width:80%}
+#t5 .chip{left:118px;top:56px}
+#t5 .c-bad{animation:fadeA 4.4s infinite}
+#t5 .c-ok{opacity:0;animation:fadeB 4.4s infinite}
+
+/* ============ T6 Job application PDF too large ============ */
+#t6 .cv{position:absolute;left:28px;top:20px;width:120px;height:108px;border-radius:10px;
+  background:#fff;border:1px solid #E4E9F2;padding:10px}
+#t6 .ph{width:38px;height:38px;border-radius:7px;background:linear-gradient(135deg,#FFB36B,#FF6BA8);
+  animation:t6p 4s infinite;transform-origin:top left}
+@keyframes t6p{0%,20%{transform:scale(1.5)}45%,90%{transform:scale(1)}100%{transform:scale(1.5)}}
+#t6 .cv i{display:block;height:5px;border-radius:3px;background:#EAEFF7;margin-top:8px}
+#t6 .cv i:nth-child(2){width:80%}#t6 .cv i:nth-child(3){width:60%}
+#t6 .chip{left:168px;top:60px}
+#t6 .c-big{animation:fadeA 4s infinite}
+#t6 .c-sml{opacity:0;animation:fadeB 4s infinite}
+
+/* ============ T7 Merge multiple PDFs ============ */
+#t7 .pf{position:absolute;width:70px;height:88px;border-radius:8px;background:#fff;
+  border:1px solid #E4E9F2;box-shadow:0 8px 18px -8px rgba(24,42,80,.25);
+  animation:t7m 4.2s infinite}
+#t7 .pf1{left:18px;top:30px;animation-delay:0s}
+#t7 .pf2{left:48px;top:22px;animation-delay:.12s}
+#t7 .pf3{left:78px;top:34px;animation-delay:.24s}
+@keyframes t7m{0%,18%{transform:translateX(0) rotate(var(--r,0deg))}
+  46%,88%{transform:translateX(calc(-1 * var(--tx,0px))) rotate(0deg)}
+  100%{transform:translateX(0) rotate(var(--r,0deg))}}
+#t7 .pf1{--r:-8deg;--tx:14px}#t7 .pf2{--r:3deg;--tx:0px}#t7 .pf3{--r:9deg;--tx:-14px}
+#t7 .chip{right:16px;top:100px;opacity:0;animation:popIn 4.2s infinite}
+
+/* ============ T8 Merge & shrink combined ============ */
+#t8 .pf{position:absolute;width:60px;height:76px;border-radius:7px;background:#fff;
+  border:1px solid #E4E9F2;box-shadow:0 6px 14px -6px rgba(24,42,80,.22)}
+#t8 .pf1{left:20px;top:24px;transform:rotate(-7deg)}
+#t8 .pf2{left:52px;top:16px;transform:rotate(2deg)}
+#t8 .pf3{left:84px;top:28px;transform:rotate(8deg)}
+#t8 .arrow{position:absolute;left:150px;top:56px;font:800 18px var(--disp);color:var(--bolt);
+  opacity:0;animation:popIn 4.4s infinite}
+#t8 .chip{right:14px;top:100px;animation:popIn 4.4s .1s infinite}
+
+/* ============ T9 Convert PDF to images ============ */
+#t9 .doc{left:26px;top:22px;width:70px;height:96px;padding:10px}
+#t9 .doc i:nth-child(1){width:70%}#t9 .doc i:nth-child(2){width:90%}#t9 .doc i:nth-child(3){width:55%}
+#t9 .arr{position:absolute;left:104px;top:58px;font:800 16px var(--disp);color:var(--bolt)}
+#t9 .thumb{position:absolute;left:140px;width:44px;height:58px;border-radius:6px;
+  opacity:0;animation:t9t 4.2s infinite}
+#t9 .th1{top:16px;background:linear-gradient(135deg,#6BC8FF,#6B7BFF);animation-delay:0s}
+#t9 .th2{top:16px;left:170px;background:linear-gradient(135deg,#7BE8A8,#4BC8D8);animation-delay:.12s}
+@keyframes t9t{0%,30%{opacity:0;transform:scale(.6)}45%,86%{opacity:1;transform:scale(1)}96%,100%{opacity:0}}
+#t9 .dpi{position:absolute;right:14px;bottom:14px;font:700 11px var(--mono);color:var(--soft)}
+
+/* ============ T10 Combine images into PDF ============ */
+#t10 .thumb{position:absolute;top:24px;width:44px;height:58px;border-radius:6px;
+  animation:t10w 3.8s infinite}
+#t10 .th1{left:24px;background:linear-gradient(135deg,#FFB36B,#FF6BA8)}
+#t10 .th2{left:74px;background:linear-gradient(135deg,#6BC8FF,#6B7BFF);animation-delay:.12s}
+#t10 .th3{left:124px;background:linear-gradient(135deg,#7BE8A8,#4BC8D8);animation-delay:.24s}
+@keyframes t10w{0%,20%{transform:scale(1) translateX(0)}45%,80%{transform:scale(.7) translateX(20px)}
+  100%{transform:scale(1) translateX(0)}}
+#t10 .doc{left:150px;top:20px;width:64px;height:88px;opacity:0;animation:t10d 3.8s infinite}
+@keyframes t10d{0%,42%{opacity:0}55%,86%{opacity:1}96%,100%{opacity:0}}
+#t10 .doc i:nth-child(1){width:70%}#t10 .doc i:nth-child(2){width:90%}
+
+/* ============ T11 Keep only Text and Vectors ============ */
+#t11 .doc{left:36px;top:18px;width:100px;height:118px;padding:14px}
+#t11 .ph{position:absolute;left:14px;top:14px;width:38px;height:38px;border-radius:6px;
+  background:linear-gradient(135deg,#FFB36B,#FF6BA8);animation:t11f 4.4s infinite}
+@keyframes t11f{0%,35%{opacity:1;transform:scale(1)}45%,90%{opacity:0;transform:scale(.4)}
+  100%{opacity:1;transform:scale(1)}}
+#t11 .line{position:absolute;left:14px;top:60px;width:70px;height:3px;background:var(--bolt);
+  border-radius:2px}
+#t11 .doc i{margin-top:8px}
+#t11 .chip{right:16px;bottom:16px;opacity:0;animation:popIn 4.4s infinite}
+
+/* ============ T12 Keep only Text (max reduction) ============ */
+#t12 .doc{left:40px;top:18px;width:92px;height:112px;padding:14px}
+#t12 .ph{position:absolute;left:14px;top:14px;width:32px;height:32px;border-radius:6px;
+  background:linear-gradient(135deg,#C89BFF,#FF9BD2);animation:t12f 4s infinite}
+@keyframes t12f{0%,30%{opacity:1;transform:scale(1)}40%,88%{opacity:0;transform:scale(.3)}
+  100%{opacity:1;transform:scale(1)}}
+#t12 .doc i{margin-top:52px}
+#t12 .doc i:nth-child(4){margin-top:6px}
+#t12 .chip{right:14px;bottom:14px;opacity:0;animation:popIn 4s .1s infinite}
+
+/* ============ T13 Scanned document bloat ============ */
+#t13 .doc{left:42px;top:16px;width:82px;height:112px;overflow:hidden;padding:12px 10px}
+#t13 .doc i:nth-child(1){width:75%}#t13 .doc i:nth-child(2){width:90%}
+#t13 .doc i:nth-child(3){width:60%}#t13 .doc i:nth-child(4){width:84%}#t13 .doc i:nth-child(5){width:50%}
+#t13 .scanline{position:absolute;left:0;right:0;top:0;height:3px;background:var(--bolt);
+  box-shadow:0 0 12px rgba(47,124,246,.8);animation:t13l 4s infinite}
+@keyframes t13l{0%{top:0}48%{top:112px}52%,100%{top:112px;opacity:0}}
+#t13 .chip{right:12px;top:60px}
+#t13 .c-big{animation:fadeA 4s infinite}
+#t13 .c-sml{opacity:0;animation:fadeB 4s infinite}
+
+/* ============ T14 Originals stay safe ============ */
+#t14 .fileRow{left:20px;top:36px}
+#t14 .copy{left:20px;top:78px;opacity:0;animation:t14c 4.2s infinite}
+@keyframes t14c{0%,32%{opacity:0;transform:translateY(-8px)}42%,90%{opacity:1;transform:none}
+  98%,100%{opacity:0}}
+#t14 .shield{position:absolute;right:22px;top:48px;font-size:34px;animation:t14s 4.2s infinite}
+@keyframes t14s{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+
+/* ============ T15 Same-folder output, no dialogs ============ */
+#t15 .folder{position:absolute;left:26px;top:24px;font-size:52px}
+#t15 .fileRow{top:42px}
+#t15 .orig{left:96px}
+#t15 .new{left:96px;top:86px;opacity:0;animation:t14c 4s infinite}
+#t15 .new b{color:var(--green)}
+
+/* ============ T16 Windows tray integration ============ */
+#t16 .bar{position:absolute;left:22px;right:22px;top:58px;height:36px;border-radius:10px;
+  background:#fff;border:1px solid #E4E9F2;display:flex;align-items:center;
+  justify-content:flex-end;gap:9px;padding:0 12px;font:500 10.5px var(--sans);color:var(--soft)}
+#t16 .boltIc{position:static;animation:t16g 2.6s infinite}
+@keyframes t16g{0%,100%{box-shadow:0 0 0 rgba(47,124,246,0)}
+  50%{box-shadow:0 0 16px rgba(47,124,246,.75)}}
+#t16 .cyc{position:absolute;left:34px;top:14px;width:70px;text-align:center}
+#t16 .cyc span{position:absolute;left:0;right:0;font:700 12px var(--mono);color:var(--soft);opacity:0}
+#t16 .cyc span:nth-child(1){animation:t16c 4.8s 0s infinite}
+#t16 .cyc span:nth-child(2){animation:t16c 4.8s 1.6s infinite}
+#t16 .cyc span:nth-child(3){animation:t16c 4.8s 3.2s infinite}
+@keyframes t16c{0%{opacity:0;transform:translateY(8px)}5%,28%{opacity:1;transform:none}
+  35%,100%{opacity:0;transform:translateY(-8px)}}
+
+/* footer strip */
+footer{position:relative;z-index:1;text-align:center;padding:6px 0 40px;
+  font:500 13px var(--sans);color:var(--soft)}
+footer b{font:700 14px var(--disp);color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<header>
+  <span class="hlogo"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2Z" fill="#FFB92E"/></svg></span>
+  <h1>SnapPDF</h1>
+  <p>16 everyday uses · one right-click</p>
+</header>
+
+<div class="grid">
+
+  <div class="tile"><div class="anim" id="t1">
+      <span class="kbd k1">Ctrl</span><span class="kbd k2">Alt</span><span class="kbd k3">P</span>
+      <span class="chip c-big">12.4 MB</span><span class="chip blue c-sml">1.1 MB ✓</span>
+    </div><div class="meta"><h3>Quick Optimize Hotkey</h3><p>Select a PDF, press Ctrl+Alt+P — optimized instantly, no window opens.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t2">
+      <span class="bar"><span class="fill"></span></span>
+      <span class="chip blue">250 KB ✓</span>
+    </div><div class="meta"><h3>Shrink to Exact Size</h3><p>Pick a target from 10 KB to 5 MB — SnapPDF finds the right quality automatically.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t3">
+      <span class="doc"><i></i><i></i><i></i><i></i></span>
+      <span class="pct">50%</span>
+      <span class="chip blue">of size ✓</span>
+    </div><div class="meta"><h3>Shrink to % of Size</h3><p>Just want it roughly smaller? Pick a percentage — 50 to 95%.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t4">
+      <span class="env"></span><span class="plane">✈️</span>
+      <span class="chip red c-big">24 MB</span><span class="chip grn c-sml">2.1 MB ✓</span>
+    </div><div class="meta"><h3>Email Attachments</h3><p>Attachment too big to send? Shrink it and send instantly, quality intact.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t5">
+      <span class="doc"><i></i><i></i><i></i><i></i></span>
+      <span class="chip red c-bad">✕ over 2 MB</span><span class="chip grn c-ok">✓ 1.9 MB</span>
+    </div><div class="meta"><h3>Government Portal Upload</h3><p>Portals demand a PDF under a size limit — pick the limit, SnapPDF fits it.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t6">
+      <span class="cv"><span class="ph"></span><i></i><i></i></span>
+      <span class="chip red c-big">6.2 MB</span><span class="chip grn c-sml">480 KB ✓</span>
+    </div><div class="meta"><h3>Job Applications</h3><p>PDF too large to upload? Shrink to size — ready in seconds.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t7">
+      <span class="pf pf1"></span><span class="pf pf2"></span><span class="pf pf3"></span>
+      <span class="chip grn">Merged ✓</span>
+    </div><div class="meta"><h3>Merge Multiple PDFs</h3><p>Select several PDFs, right-click, Merge — one file, original order.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t8">
+      <span class="pf pf1"></span><span class="pf pf2"></span><span class="pf pf3"></span>
+      <span class="arrow">→</span>
+      <span class="chip blue">1 file, 500 KB ✓</span>
+    </div><div class="meta"><h3>Merge &amp; Shrink Combined</h3><p>Combine several PDFs into one, straight to a target size — one action.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t9">
+      <span class="doc"><i></i><i></i><i></i></span>
+      <span class="arr">→</span>
+      <span class="thumb th1"></span><span class="thumb th2"></span>
+      <span class="dpi">150 DPI</span>
+    </div><div class="meta"><h3>Convert PDF to Images</h3><p>Every page exported as JPG — pick 72 to 300 DPI.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t10">
+      <span class="thumb th1"></span><span class="thumb th2"></span><span class="thumb th3"></span>
+      <span class="doc"><i></i><i></i></span>
+    </div><div class="meta"><h3>Combine Images into PDF</h3><p>Select scanned photos, right-click → Combine to PDF — one document.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t11">
+      <span class="doc"><span class="ph"></span><span class="line"></span><i></i><i></i></span>
+      <span class="chip blue">No images ✓</span>
+    </div><div class="meta"><h3>Keep only Text and Vectors</h3><p>Strip every image, keep text and vector art exactly as they were.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t12">
+      <span class="doc"><span class="ph"></span><i></i><i></i><i></i><i></i></span>
+      <span class="chip blue">4 KB ✓</span>
+    </div><div class="meta"><h3>Keep only Text</h3><p>Maximum reduction — rebuilds the page from text alone, standard font.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t13">
+      <span class="doc"><i></i><i></i><i></i><i></i><i></i><span class="scanline"></span></span>
+      <span class="chip red c-big">8 MB</span><span class="chip grn c-sml">900 KB ✓</span>
+    </div><div class="meta"><h3>Scanned Document Bloat</h3><p>Scans are huge by default — shrink them into lightweight, shareable PDFs.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t14">
+      <span class="fileRow"><span class="sq g1"></span>report.pdf</span>
+      <span class="fileRow copy"><span class="sq g3"></span><b style="color:var(--green)">report_optimized.pdf</b></span>
+      <span class="shield">🛡️</span>
+    </div><div class="meta"><h3>Originals Stay Safe</h3><p>Never modified, never overwritten — always a new optimized copy.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t15">
+      <span class="folder">📁</span>
+      <span class="fileRow orig"><span class="sq g2"></span>invoice.pdf</span>
+      <span class="fileRow new"><span class="sq g3"></span><b>invoice_248KB.pdf</b></span>
+    </div><div class="meta"><h3>Same-Folder Output</h3><p>No "save where?" dialogs — output lands right beside the original.</p></div></div>
+
+  <div class="tile"><div class="anim" id="t16">
+      <span class="cyc"><span>Optimize</span><span>Merge</span><span>Convert</span></span>
+      <span class="bar"><span class="boltIc"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2Z" fill="#FFB92E"/></svg></span><span>10:42</span></span>
+    </div><div class="meta"><h3>Windows Tray Integration</h3><p>Starts with Windows, waits in the tray — always ready, never in the way.</p></div></div>
+
+</div>
+
+<footer>⚡ <b>SnapPDF</b> — Shrink, merge &amp; convert. From a right-click. · Open source · Free forever</footer>
+
+</body>
+</html>

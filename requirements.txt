@@ -1,0 +1,18 @@
+# SnapPDF - runtime dependencies
+# Core engine (cross-platform):
+pikepdf>=9.0          # qpdf bindings: structure rewrite, metadata, image access
+pypdfium2>=4.30       # PDF rendering (pages -> images), BSD-licensed, light
+pillow>=10.0          # image decode/encode
+
+# GUI:
+customtkinter>=5.2
+tkinterdnd2>=0.4      # optional drag & drop (app works without it)
+
+# Windows background helper + right-click (Windows only):
+pynput>=1.7           # global hotkey Ctrl+Alt+P
+pystray>=0.19         # tray icon
+pywin32>=306          # Explorer selection via COM
+winotify>=1.1         # toast notifications
+
+# Build-time only:
+# pyinstaller>=6.0
